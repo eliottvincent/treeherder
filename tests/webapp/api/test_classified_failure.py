@@ -164,8 +164,7 @@ def test_put_existing_bug_number(client, classified_failures, test_user):
     assert classified_failures[0].bug_number == 1234
 
 
-def test_put_duplicate_bug_number(client, classified_failures, failure_lines,
-                                  test_user):
+def test_put_duplicate_bug_number(client, classified_failures, test_user):
     client.force_authenticate(user=test_user)
 
     classified_failures[0].bug_number = 1234
