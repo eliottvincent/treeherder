@@ -270,8 +270,10 @@ treeherder.controller('PluginCtrl', [
                     const performanceData = (Object.values(results[3])).reduce((a, b) => [...a, ...b], []);
                     if (performanceData) {
                         const signatureIds = _.uniq(_.map(performanceData, 'signature_id'));
-                        $q.all(_.chunk(signatureIds, 20).map(
-                            signatureIdChunk => PhSeries.getSeriesList($scope.repoName, { id: signatureIdChunk })
+                        $q.all(signatureIds.reduce((acc, val, idx, arr, chunkSize = 20) => (
+                            !(idx % chunkSize) ? acc.concat([arr.slice(idx, idx + chunkSize)]) : acc),
+                            []).map(
+                                signatureIdChunk => PhSeries.getSeriesList($scope.repoName, { id: signatureIdChunk })
                         )).then((seriesListList) => {
                             const seriesList = seriesListList.reduce((a, b) => [...a, ...b], []);
                             $scope.perfJobDetail = performanceData.map(d => ({

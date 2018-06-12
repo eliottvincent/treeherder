@@ -91,31 +91,34 @@ perf.controller('dashCtrl', [
                 // (so we can mash together pgo and opt)
                 $scope.testList = _.uniq(_.map(seriesToMeasure, 'testName'));
 
-                $q.all(_.chunk(seriesToMeasure, 40).map(function (seriesChunk) {
-                    const params = {
-                        signature_id: _.map(seriesChunk, 'id'),
-                        framework: $scope.framework
-                    };
-                    if ($scope.revision) {
-                        params.push_id = resultSetId;
-                    } else {
-                        params.interval = $scope.selectedTimeRange.value;
-                    }
 
-                    return PhSeries.getSeriesData($scope.selectedRepo.name, params).then(function (seriesData) {
-                        _.forIn(seriesData, function (data, signature) {
-                            const series = _.find(seriesChunk, { signature: signature });
-                            const type = (series.options.indexOf($scope.variantDataOpt) >= 0) ? 'variant' : 'base';
-                            resultsMap[type][signature] = {
-                                platform: series.platform,
-                                name: series.testName,
-                                lowerIsBetter: series.lowerIsBetter,
-                                hasSubTests: series.hasSubtests,
-                                option: series.options.indexOf('opt') >= 0 ? 'opt' : 'pgo',
-                                values: _.map(data, 'value')
-                            };
+                $q.all(seriesToMeasure.reduce((acc, val, idx, arr, chunkSize = 40) => (
+                    !(idx % chunkSize) ? acc.concat([arr.slice(idx, idx + chunkSize)]) : acc),
+                    []).map((seriesChunk) => {
+                        const params = {
+                            signature_id: _.map(seriesChunk, 'id'),
+                            framework: $scope.framework
+                        };
+                        if ($scope.revision) {
+                            params.push_id = resultSetId;
+                        } else {
+                            params.interval = $scope.selectedTimeRange.value;
+                        }
+
+                        return PhSeries.getSeriesData($scope.selectedRepo.name, params).then((seriesData) => {
+                            _.forIn(seriesData, (data, signature) => {
+                                const series = _.find(seriesChunk, { signature: signature });
+                                const type = (series.options.indexOf($scope.variantDataOpt) >= 0) ? 'variant' : 'base';
+                                resultsMap[type][signature] = {
+                                    platform: series.platform,
+                                    name: series.testName,
+                                    lowerIsBetter: series.lowerIsBetter,
+                                    hasSubTests: series.hasSubtests,
+                                    option: series.options.indexOf('opt') >= 0 ? 'opt' : 'pgo',
+                                    values: _.map(data, 'value')
+                                };
+                            });
                         });
-                    });
                 })).then(function () {
                     $scope.dataLoading = false;
                     $scope.testList.forEach(function (testName) {
@@ -294,30 +297,32 @@ perf.controller('dashSubtestCtrl', [
                 $scope.testList = [summaryTestName];
                 $scope.titles[summaryTestName] = summaryTestName;
 
-                return $q.all(_.chunk(seriesList, 40).map(function (seriesChunk) {
-                    const params = {
-                        signature_id: _.map(seriesChunk, 'id'),
-                        framework: $scope.framework
-                    };
-                    if ($scope.revision) {
-                        params.push_id = resultSetId;
-                    } else {
-                        params.interval = $scope.selectedTimeRange.value;
-                    }
-                    return PhSeries.getSeriesData(
-                        $scope.selectedRepo.name, params).then(function (seriesData) {
-                            _.forIn(seriesData, function (data, signature) {
-                                const series = _.find(seriesList, { signature: signature });
-                                const type = (series.options.indexOf($scope.variantDataOpt) >= 0) ? 'variant' : 'base';
-                                resultsMap[type][signature] = {
-                                    platform: series.platform,
-                                    suite: series.suite,
-                                    name: PhSeries.getTestName(series),
-                                    lowerIsBetter: series.lowerIsBetter,
-                                    values: _.map(data, 'value')
-                                };
+                return $q.all(seriesList.reduce((acc, val, idx, arr, chunkSize = 40) => (
+                    !(idx % chunkSize) ? acc.concat([arr.slice(idx, idx + chunkSize)]) : acc),
+                    []).map((seriesChunk) => {
+                        const params = {
+                            signature_id: _.map(seriesChunk, 'id'),
+                            framework: $scope.framework
+                        };
+                        if ($scope.revision) {
+                            params.push_id = resultSetId;
+                        } else {
+                            params.interval = $scope.selectedTimeRange.value;
+                        }
+                        return PhSeries.getSeriesData(
+                            $scope.selectedRepo.name, params).then(function (seriesData) {
+                                _.forIn(seriesData, function (data, signature) {
+                                    const series = _.find(seriesList, { signature: signature });
+                                    const type = (series.options.indexOf($scope.variantDataOpt) >= 0) ? 'variant' : 'base';
+                                    resultsMap[type][signature] = {
+                                        platform: series.platform,
+                                        suite: series.suite,
+                                        name: PhSeries.getTestName(series),
+                                        lowerIsBetter: series.lowerIsBetter,
+                                        values: _.map(data, 'value')
+                                    };
+                                });
                             });
-                        });
                 })).then(function () {
                     $scope.dataLoading = false;
                     const subtestNames = _.map(resultsMap.base,
