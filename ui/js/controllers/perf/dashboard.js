@@ -115,7 +115,6 @@ perf.controller('dashCtrl', [
                                 values: _.map(data, 'value'),
                             };
                         });
-                    });
                 })).then(function () {
                     $scope.dataLoading = false;
                     $scope.testList.forEach(function (testName) {
@@ -317,7 +316,6 @@ perf.controller('dashSubtestCtrl', [
                                     values: _.map(data, 'value'),
                                 };
                             });
-                        });
                 })).then(function () {
                     $scope.dataLoading = false;
                     const subtestNames = _.map(resultsMap.base,
